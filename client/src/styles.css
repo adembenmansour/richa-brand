@@ -470,11 +470,19 @@ textarea:focus {
 }
 
 /* ==========================================================================
-   COMMANDE PAGE REDESIGN
+   COMMANDE BERSHKA-STYLE REDESIGN
    ========================================================================== */
 
-/* Navbar spécifique */
-.product-navbar {
+.bershka-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-white);
+}
+
+/* Navbar */
+.bershka-navbar {
   position: sticky;
   top: 0;
   z-index: 100;
@@ -482,8 +490,9 @@ textarea:focus {
   border-bottom: 1px solid var(--color-black);
   padding: 16px 0;
   text-align: center;
+  flex-shrink: 0;
 }
-.product-navbar-logo {
+.bershka-logo {
   font-family: 'Helvetica Neue', 'Arial Black', sans-serif;
   font-weight: 900;
   font-size: 20px;
@@ -493,265 +502,191 @@ textarea:focus {
   text-decoration: none;
 }
 
-/* Carrousel */
-.carousel-container {
-  width: 100vw;
+/* Layout */
+.bershka-layout {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 53px); /* Ajusté avec la hauteur de la Navbar */
   overflow: hidden;
-  height: 520px;
+}
+
+/* Section Carrousel */
+.bershka-carousel-section {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
   background: #000;
   cursor: grab;
-  position: relative;
 }
-.carousel-track {
+.bershka-carousel-track {
   display: flex;
+  height: 100%;
   width: fit-content;
-  animation: scrollLeft 25s linear infinite;
+  animation: scrollLeftFull 25s linear infinite;
 }
-.carousel-track:hover {
+.bershka-carousel-track:hover {
   animation-play-state: paused;
 }
-.carousel-image {
-  height: 520px;
+.bershka-carousel-image {
+  height: 100%;
   width: auto;
   object-fit: cover;
   flex-shrink: 0;
   margin-right: 2px;
 }
 
-@keyframes scrollLeft {
+@keyframes scrollLeftFull {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
 
-/* Section Fiche Produit (2 colonnes) */
-.product-layout {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 60px 40px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: start;
-}
-
-/* Colonne Gauche - Galerie */
-.product-gallery {
-  position: relative;
-  width: 100%;
-}
-.product-main-img-container {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3/4;
-  background-color: #F5F5F5;
-  overflow: hidden;
-}
-.product-main-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.product-nouveau-badge {
+/* Puces de contrôle (Mockup Style) */
+.bershka-carousel-controls {
   position: absolute;
-  top: 0;
-  left: 0;
-  background-color: #000;
-  color: #FFF;
-  font-size: 10px;
-  letter-spacing: 2px;
-  padding: 6px 14px;
-  text-transform: uppercase;
-  z-index: 10;
-}
-.product-thumbnails {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.product-thumbnail {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border: 2px solid transparent;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 14px;
+  font-size: 10px;
+  font-family: monospace;
+  color: #000;
+  z-index: 5;
+  border: 1px solid #000;
   cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-.product-thumbnail.active {
-  border-color: #000;
 }
 
-/* Colonne Droite - Infos */
-.product-info-col {
+/* Panneau de détails à droite */
+.bershka-details-card {
+  width: 400px;
+  background-color: var(--color-white);
+  border-left: 1px solid var(--color-black);
+  padding: 40px;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
-.product-category {
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: #999;
+
+.bershka-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 8px;
-  font-weight: bold;
 }
-.product-name-title {
-  font-size: 32px;
+.bershka-product-title {
+  font-size: 20px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.5px;
-  margin-bottom: 4px;
-  line-height: 1.1;
+  margin: 0;
+  line-height: 1.2;
 }
-.product-subtitle {
-  font-size: 12px;
-  color: #666;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-}
-.product-price-large {
-  font-size: 36px;
+.bershka-product-price {
+  font-size: 20px;
   font-weight: 900;
   color: #000;
-  margin-bottom: 4px;
-  line-height: 1;
+  margin: 0;
+  white-space: nowrap;
 }
-.product-subprice {
-  font-size: 12px;
+.bershka-product-ref {
+  font-size: 11px;
   color: #666;
-  margin-bottom: 28px;
-}
-.product-separator {
-  border-bottom: 1px solid #E0E0E0;
-  margin-bottom: 24px;
-}
-.product-color-section {
-  margin-bottom: 20px;
-}
-.product-color-label {
   text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--color-gray-label);
-  margin-bottom: 4px;
+  margin-bottom: 30px;
+  letter-spacing: 1px;
 }
-.product-color-value {
-  font-weight: bold;
-  font-size: 13px;
-}
-.product-size-header {
+
+.bershka-tailles-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
-.product-size-label {
-  text-transform: uppercase;
+.bershka-tailles-title {
   font-size: 10px;
+  font-weight: bold;
   letter-spacing: 2px;
-  font-weight: 700;
-}
-.product-size-guide-link {
   text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-decoration: underline;
   color: #000;
+}
+.bershka-size-guide-btn {
   background: none;
   border: none;
+  text-decoration: underline;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
   cursor: pointer;
   padding: 0;
-  font-weight: bold;
+  text-transform: uppercase;
+  color: #000;
 }
-.product-size-pills {
+
+.bershka-sizes-pills {
   display: flex;
   gap: 8px;
-  margin: 12px 0 20px 0;
+  margin-bottom: 16px;
 }
-.product-size-pill {
+.bershka-size-pill {
   border: 1px solid #C0C0C0;
-  padding: 8px 16px;
+  padding: 10px 16px;
   font-size: 12px;
   font-weight: 600;
   border-radius: 0 !important;
   cursor: pointer;
   background: #FFF;
   color: #000;
-  transition: all 0.2s ease;
   min-width: 48px;
   text-align: center;
+  transition: all 0.2s ease;
 }
-.product-size-pill.selected {
+.bershka-size-pill.selected {
   border-color: #000;
   font-weight: 900;
-  background: #FFF;
 }
-.product-size-pill.sold-out {
+.bershka-size-pill.sold-out {
   color: #C0C0C0;
   text-decoration: line-through;
   cursor: not-allowed;
   border-color: #E0E0E0;
 }
-.product-mannequin {
+
+.bershka-mannequin {
   font-size: 11px;
   color: #888;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
-.product-error-msg {
-  color: var(--color-error);
-  font-size: 12px;
-  margin-bottom: 12px;
-  font-weight: bold;
-}
-.product-success-msg {
-  color: #2e7d32;
-  font-size: 12px;
-  margin-bottom: 12px;
-  font-weight: bold;
-}
-.product-add-btn {
+
+.bershka-btn-acheter {
   width: 100%;
   background: #000;
   color: #FFF;
   border: none;
   border-radius: 0 !important;
   padding: 18px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: bold;
   letter-spacing: 3px;
   text-transform: uppercase;
   cursor: pointer;
-  margin-bottom: 12px;
+  margin-bottom: 24px;
   transition: background-color 0.2s ease;
 }
-.product-add-btn:hover {
+.bershka-btn-acheter:hover {
   background: #333;
 }
-.product-direct-btn {
-  width: 100%;
-  background: #FFF;
-  color: #000;
-  border: 1px solid #000;
-  border-radius: 0 !important;
-  padding: 16px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-bottom: 24px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.product-direct-btn:hover {
-  background: #000;
-  color: #FFF;
-}
-.product-delivery-info {
+
+.bershka-delivery-info {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 10px;
 }
-.product-delivery-line {
+.bershka-delivery-line {
   font-size: 12px;
   color: #444;
   display: flex;
@@ -759,67 +694,62 @@ textarea:focus {
   gap: 8px;
 }
 
-/* Accordéon */
-.product-accordion-item {
-  border-bottom: 1px solid #E0E0E0;
+/* Slide-in checkout drawer overlay */
+.checkout-overlay-premium {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
 }
-.product-accordion-item:first-of-type {
-  border-top: 1px solid #E0E0E0;
-  margin-top: 20px;
+.checkout-drawer-premium {
+  width: 450px;
+  height: 100%;
+  background: #FFF;
+  border-left: 1px solid #000;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
 }
-.product-accordion-header {
+.drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 0;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  margin-bottom: 30px;
 }
-.product-accordion-content {
-  font-size: 13px;
-  color: #666;
-  line-height: 1.7;
-  padding-bottom: 14px;
-}
-
-/* Section Formulaire de commande */
-.order-form-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 40px 60px 40px;
-  border-top: 2px solid #000;
-}
-.order-form-header {
-  margin-top: 40px;
-  margin-bottom: 40px;
-}
-.order-form-step {
-  text-transform: uppercase;
-  color: #999;
-  font-size: 10px;
-  letter-spacing: 3px;
-  font-weight: bold;
-  display: block;
-  margin-bottom: 8px;
-}
-.order-form-title {
-  font-size: 32px;
+.drawer-header h3 {
+  font-size: 18px;
   font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 1px;
   margin: 0;
 }
-.order-form-layout {
-  display: grid;
-  grid-template-columns: 55% 45%;
-  gap: 40px;
-  align-items: start;
+.drawer-close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
 
-/* Champs de formulaire */
-.form-input-premium {
+/* Form inputs for drawer */
+.drawer-form-group {
+  margin-bottom: 20px;
+}
+.drawer-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #666;
+}
+.drawer-input {
   border: 1px solid #C0C0C0;
   border-radius: 0 !important;
   padding: 12px 14px;
@@ -829,22 +759,11 @@ textarea:focus {
   background-color: #FFF;
   outline: none;
 }
-.form-input-premium:focus {
+.drawer-input:focus {
   border-color: #000;
 }
-.form-group-premium {
-  margin-bottom: 20px;
-}
-.form-group-premium label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: bold;
-  color: var(--color-gray-label);
-}
-.tel-prefix-premium {
+
+.drawer-tel-prefix {
   padding: 12px 14px;
   background-color: #F5F5F5;
   border: 1px solid #C0C0C0;
@@ -853,46 +772,36 @@ textarea:focus {
   display: flex;
   align-items: center;
 }
-.tel-wrapper-premium {
+.drawer-tel-wrapper {
   display: flex;
 }
-.tel-wrapper-premium input {
+.drawer-tel-wrapper input {
   border-left: none;
 }
 
-/* Récapitulatif commande au-dessus du bouton */
-.order-form-recap-box {
+.drawer-recap-box {
   background-color: #F5F5F5;
   padding: 16px;
   border: 1px solid #E0E0E0;
+  margin-top: 30px;
   margin-bottom: 20px;
 }
-.order-form-recap-title {
+.drawer-recap-title {
   text-transform: uppercase;
   font-weight: bold;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 1px;
   margin-bottom: 8px;
   display: block;
 }
-.order-form-recap-empty {
-  color: #888;
-  font-size: 13px;
-}
-.order-form-recap-empty a {
-  color: #000;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.order-form-recap-item {
+.drawer-recap-item {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   font-weight: bold;
 }
 
-/* Checkbox paiement */
-.payment-checkbox-card {
+.drawer-payment-card {
   border: 1px solid #C0C0C0;
   background-color: #FAFAFA;
   padding: 16px;
@@ -901,17 +810,17 @@ textarea:focus {
   align-items: flex-start;
   gap: 12px;
 }
-.payment-checkbox-card input {
+.drawer-payment-card input {
   margin-top: 3px;
   accent-color: #000;
 }
-.payment-checkbox-title {
+.drawer-payment-title {
   font-size: 13px;
   font-weight: bold;
   text-transform: uppercase;
   display: block;
 }
-.payment-checkbox-sub {
+.drawer-payment-sub {
   font-size: 11px;
   color: #888;
   text-transform: uppercase;
@@ -920,8 +829,7 @@ textarea:focus {
   display: block;
 }
 
-/* Bouton Confirmer */
-.order-confirm-btn {
+.drawer-confirm-btn {
   width: 100%;
   background: #000;
   color: #FFF;
@@ -936,120 +844,15 @@ textarea:focus {
   margin-bottom: 12px;
   transition: background-color 0.2s ease;
 }
-.order-confirm-btn:hover {
+.drawer-confirm-btn:hover {
   background: #333;
 }
-.order-confirm-secure-text {
+.drawer-secure-text {
   font-size: 11px;
   color: #888;
   text-align: center;
   letter-spacing: 1px;
   text-transform: uppercase;
-}
-
-/* Colonne Droite - Récap Sticky Sombre */
-.order-sticky-recap {
-  background-color: #1A1A1A;
-  color: #FFF;
-  position: sticky;
-  top: 80px;
-  padding: 32px;
-  z-index: 10;
-}
-.order-sticky-label {
-  color: #999;
-  font-size: 9px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 4px;
-  font-weight: bold;
-}
-.order-sticky-title {
-  color: #FFF;
-  font-weight: bold;
-  font-size: 15px;
-  text-transform: uppercase;
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-.order-sticky-separator {
-  border-bottom: 1px solid #333;
-  margin: 20px 0;
-}
-.order-sticky-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 15px;
-}
-.order-sticky-item-name {
-  font-weight: bold;
-}
-.order-sticky-item-desc {
-  font-size: 11px;
-  color: #AAA;
-}
-.order-sticky-item-price {
-  font-weight: bold;
-}
-.order-sticky-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-.order-sticky-row.total-row {
-  font-size: 20px;
-  font-weight: bold;
-  margin-top: 15px;
-}
-.order-sticky-badges {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 32px;
-}
-.order-sticky-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #FFF;
-}
-
-/* Bannière 4 Garanties */
-.guarantees-banner-premium {
-  background-color: #F5F5F5;
-  border-top: 1px solid #E0E0E0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
-}
-.guarantees-cell-premium {
-  padding: 28px 16px;
-  text-align: center;
-  border-right: 1px solid #E0E0E0;
-}
-.guarantees-cell-premium:last-child {
-  border-right: none;
-}
-.guarantees-title-premium {
-  font-size: 12px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.guarantees-sub-premium {
-  font-size: 11px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 /* ==========================================================================
@@ -1481,42 +1284,32 @@ textarea:focus {
     border-bottom: none;
   }
 
-  /* Carousel et Fiche Produit Premium */
-  .carousel-container {
+  /* Bershka Redesign Mobile Overrides */
+  .bershka-page {
+    height: auto;
+    overflow: auto;
+  }
+  .bershka-layout {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+  .bershka-carousel-section {
+    height: 300px;
+    flex-shrink: 0;
+  }
+  .bershka-carousel-image {
     height: 300px;
   }
-  .carousel-image {
-    height: 300px;
+  .bershka-details-card {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--color-black);
+    padding: 30px 20px;
   }
-  .product-layout {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    padding: 40px 20px;
-  }
-  .order-form-container {
-    padding: 0 20px 40px 20px;
-  }
-  .order-form-layout {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  .order-sticky-recap {
-    position: static;
-    margin-top: 20px;
+  .checkout-drawer-premium {
+    width: 100%;
     padding: 24px;
-  }
-  .guarantees-banner-premium {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .guarantees-cell-premium {
-    border-bottom: 1px solid #E0E0E0;
-  }
-  .guarantees-cell-premium:nth-child(2n) {
-    border-right: none;
-  }
-  .guarantees-cell-premium:nth-child(3),
-  .guarantees-cell-premium:nth-child(4) {
-    border-bottom: none;
   }
 
   /* Confirmation */
