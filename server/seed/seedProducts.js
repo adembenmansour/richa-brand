@@ -5,31 +5,21 @@ require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
 
-// Produits initiaux à insérer dans la base de données
 const initialProducts = [
   {
-    badge: "POPULAIRE",
-    categorie: "ENSEMBLE DEUX PIÈCES",
-    nom: "SET COMPLET",
+    id: 1,
+    badge: "NOUVEAU",
+    categorie: "COLLECTION 2026",
+    nom: "SET COMPLET RICHA",
+    sousNom: "HAUT DRAPÉ + PANTALON WIDE-LEG",
     prix: 120,
-    description: "Haut drapé et pantalon wide-leg en lin 100% naturel.",
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"
-  },
-  {
-    badge: "HAUT DRAPÉ",
-    categorie: "HAUT DRAPÉ",
-    nom: "PULL",
-    prix: 30,
-    description: "Haut drapé en lin, coupe fluide et légère.",
-    image: "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=600"
-  },
-  {
-    badge: "PANTALON WIDE-LEG",
-    categorie: "PANTALON WIDE-LEG",
-    nom: "PANTALON",
-    prix: 70,
-    description: "Pantalon wide-leg taille haute, tombé parfait.",
-    image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4057?w=600"
+    couleur: "BEIGE NATUREL",
+    description: "Set deux pièces composé d'un haut drapé et d'un pantalon wide-leg en lin 100% naturel. Silhouette architecturale et fluide. Fait à la main en Tunisie.",
+    composition: "100% Lin naturel · Lavage à la main recommandé · Ne pas mettre au sèche-linge",
+    tailles: ["XS","S","M","L","XL"],
+    taillesDisponibles: ["S","M","L","XL"],
+    mannequin: "170 cm de taille / Taille M",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800"
   }
 ];
 
@@ -46,7 +36,7 @@ async function seedDatabase() {
 
     // Insertion des produits initiaux
     await Product.insertMany(initialProducts);
-    console.log("✓ 3 produits insérés avec succès");
+    console.log("✓ 1 produit inséré avec succès");
 
   } catch (error) {
     console.error("✗ Erreur lors du seeding de la base de données :", error);

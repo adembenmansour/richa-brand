@@ -6,24 +6,16 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState([]);
 
-  // Ajouter un article au panier
+  // Ajouter un article au panier (remplace tout article existant)
   const addToCart = (newItem) => {
-    setItems((prevItems) => {
-      // Recherche si l'article existe déjà avec le même ID et la même TAILLE
-      const existingIndex = prevItems.findIndex(
-        (i) => i.id === newItem.id && i.taille === newItem.taille
-      );
-
-      if (existingIndex > -1) {
-        // Si oui, on incrémente la quantité
-        const updated = [...prevItems];
-        updated[existingIndex].qte += 1;
-        return updated;
-      } else {
-        // Sinon, on ajoute le nouvel article avec qte = 1
-        return [...prevItems, { ...newItem, qte: 1 }];
-      }
-    });
+    setItems([{
+      id: newItem.id || 1,
+      nom: newItem.nom,
+      prix: newItem.prix,
+      taille: newItem.taille,
+      image: newItem.image || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+      qte: 1
+    }]);
   };
 
   // Supprimer un article du panier

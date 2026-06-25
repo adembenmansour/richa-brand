@@ -1,162 +1,204 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import ProductCard from "../components/ProductCard";
 import SizeGuideModal from "../components/SizeGuideModal";
-import OrderSummary from "../components/OrderSummary";
 import { useCart } from "../context/CartContext";
+
+// Images du carrousel auto-scroll (6 images, répétées pour boucle infinie sans saut)
+const carouselImages = [
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+  "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800",
+  "https://images.unsplash.com/photo-1594938298603-c8148c4b4057?w=800",
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+  "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=800",
+  "https://images.unsplash.com/photo-1485231183945-fffde7cc051f?w=800"
+];
+
+// Duplication des images pour créer le défilement continu
+const duplicatedImages = [...carouselImages, ...carouselImages];
+
+// Images pour la galerie (3 miniatures)
+const galleryImages = [
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+  "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800",
+  "https://images.unsplash.com/photo-1594938298603-c8148c4b4057?w=800"
+];
+
+// Liste complète des 24 gouvernorats tunisiens
+const governorates = [
+  "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa",
+  "Jendouba", "Kairouan", "Kasserine", "Kébili", "Le Kef", "Mahdia",
+  "La Manouba", "Médenine", "Monastir", "Nabeul", "Sfax", "Sidi Bouzid",
+  "Siliana", "Sousse", "Tataouine", "Tozeur", "Tunis", "Zaghouan"
+];
+
+// Fallback statique robuste pour le produit au cas où l'API échoue ou est lente
+const FALLBACK_PRODUCT = {
+  id: 1,
+  badge: "NOUVEAU",
+  categorie: "COLLECTION 2026",
+  nom: "SET COMPLET RICHA",
+  sousNom: "HAUT DRAPÉ + PANTALON WIDE-LEG",
+  prix: 120,
+  couleur: "BEIGE NATUREL",
+  description: "Set deux pièces composé d'un haut drapé et d'un pantalon wide-leg en lin 100% naturel. Silhouette architecturale et fluide. Fait à la main en Tunisie.",
+  composition: "100% Lin naturel · Lavage à la main recommandé · Ne pas mettre au sèche-linge · Repassage à basse température",
+  tailles: ["XS", "S", "M", "L", "XL"],
+  taillesDisponibles: ["S", "M", "L", "XL"],
+  mannequin: "Mannequin : 170 cm de taille / Taille M",
+  image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800"
+};
 
 export default function Commande() {
   const navigate = useNavigate();
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, addToCart, totalPrice, clearCart } = useCart();
 
-  // États pour les produits de l'API
-  const [products, setProducts] = useState([]);
+  // États du produit
+  const [product, setProduct] = useState(FALLBACK_PRODUCT);
   const [loading, setLoading] = useState(true);
-  const [errorProducts, setErrorProducts] = useState(null);
 
-  // État de la modale du guide des tailles
+  // Modale Guide des tailles
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
-  // États du formulaire de livraison
+  // État de l'image principale de la galerie
+  const [mainImage, setMainImage] = useState(galleryImages[0]);
+
+  // État pour la taille sélectionnée localement
+  const [selectedSize, setSelectedSize] = useState(null);
+
+  // Accordéon infos produit
+  const [accordionDetails, setAccordionDetails] = useState(false);
+  const [accordionCare, setAccordionCare] = useState(false);
+
+  // États pour les notifications de panier (messages rouge/vert)
+  const [sizeError, setSizeError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // États du formulaire
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [gouvernorat, setGouvernorat] = useState("");
   const [adresse, setAdresse] = useState("");
   const [note, setNote] = useState("");
 
-  // États de validation et de soumission
+  // États de validation
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Récupérer les produits du serveur et mapper les images dynamiques actives
+  // Récupérer le produit unique depuis le serveur
   useEffect(() => {
-    Promise.all([
-      fetch("/api/products").then((res) => {
+    fetch("/api/products")
+      .then((res) => {
         if (!res.ok) throw new Error("Impossible de charger les produits");
         return res.json();
-      }),
-      fetch("/api/media/active?type=image").then((res) => {
-        if (!res.ok) return []; // Fallback silencieux en cas d'erreur de chargement média
-        return res.json();
       })
-    ])
-      .then(([productsData, mediaData]) => {
-        const updatedProducts = productsData.map((product) => {
-          let sectionName = "";
-          // Mapper le nom du produit vers sa section média correspondante
-          if (product.nom.toLowerCase().includes("set") || product.nom.toLowerCase().includes("complet")) {
-            sectionName = "produit_set";
-          } else if (product.nom.toLowerCase().includes("pull")) {
-            sectionName = "produit_pull";
-          } else if (product.nom.toLowerCase().includes("pantalon")) {
-            sectionName = "produit_pantalon";
-          }
-
-          // Chercher s'il existe une image active pour cette section de produit
-          const matchingMedia = mediaData.find(m => m.section === sectionName);
-          if (matchingMedia) {
-            return { ...product, image: matchingMedia.url };
-          }
-          return product;
-        });
-
-        setProducts(updatedProducts);
+      .then((data) => {
+        if (data && data.length > 0) {
+          // On prend le premier produit (qui est notre unique SET COMPLET RICHA)
+          setProduct(data[0]);
+          // Met à jour l'image de départ
+          setMainImage(data[0].image || galleryImages[0]);
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
-        setErrorProducts("Erreur lors de la récupération des produits.");
+        console.error("Erreur de chargement API, utilisation du fallback statique :", err);
         setLoading(false);
       });
   }, []);
 
-  const governorates = [
-    "Ariana",
-    "Béja",
-    "Ben Arous",
-    "Bizerte",
-    "Gabès",
-    "Gafsa",
-    "Jendouba",
-    "Kairouan",
-    "Kasserine",
-    "Kébili",
-    "Le Kef",
-    "Mahdia",
-    "La Manouba",
-    "Médenine",
-    "Monastir",
-    "Nabeul",
-    "Sfax",
-    "Sidi Bouzid",
-    "Siliana",
-    "Sousse",
-    "Tataouine",
-    "Tozeur",
-    "Tunis",
-    "Zaghouan",
-  ];
+  // Défilement fluide vers une section par ID
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
-  // Gestion de la soumission de la commande
-  const handleCheckoutSubmit = async (e) => {
+  // Ajout au panier
+  const handleAddToCart = (directOrder = false) => {
+    setSizeError("");
+    setSuccessMessage("");
+
+    if (!selectedSize) {
+      setSizeError("Veuillez sélectionner une taille");
+      return false;
+    }
+
+    // Ajoute au panier global
+    addToCart({
+      id: product.id || 1,
+      nom: product.nom,
+      prix: product.prix,
+      taille: selectedSize,
+      image: mainImage
+    });
+
+    setSuccessMessage("✓ Article ajouté — Complétez votre commande ci-dessous");
+    
+    // Scroll fluide vers le formulaire de livraison
+    setTimeout(() => {
+      scrollToSection("formulaire");
+    }, 100);
+
+    return true;
+  };
+
+  // Validation et envoi du formulaire de commande
+  const handleOrderSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+    setErrors({});
 
-    const cart = { items };
-    const setError = setSubmitError;
-
-    // Avant le fetch, vérifier que le panier n'est pas vide
-    if (!cart.items || cart.items.length === 0) {
-      setError("Veuillez ajouter au moins un article avant de confirmer.");
+    // Vérifier que le panier contient bien un article
+    if (items.length === 0) {
+      setSubmitError("Veuillez d'abord sélectionner une taille");
+      scrollToSection("tailles-section");
       return;
     }
 
-    // Validation des champs
+    // Validation des champs obligatoires
     const tempErrors = {};
-    if (!nom.trim()) tempErrors.nom = "Le nom complet est obligatoire.";
+    if (!nom.trim()) {
+      tempErrors.nom = "Le nom complet est obligatoire.";
+    }
 
-    // Téléphone tunisien basique (8 chiffres)
     if (!telephone.trim()) {
       tempErrors.telephone = "Le numéro de téléphone est obligatoire.";
     } else if (!/^\d{8}$/.test(telephone.trim())) {
       tempErrors.telephone = "Le numéro doit comporter exactement 8 chiffres.";
     }
 
-    if (!gouvernorat) tempErrors.gouvernorat = "Veuillez sélectionner un gouvernorat.";
-    if (!adresse.trim()) tempErrors.adresse = "L'adresse complète est obligatoire.";
+    if (!gouvernorat) {
+      tempErrors.gouvernorat = "Veuillez sélectionner un gouvernorat.";
+    }
+
+    if (!adresse.trim()) {
+      tempErrors.adresse = "L'adresse complète est obligatoire.";
+    }
 
     setErrors(tempErrors);
 
-    // Si des erreurs existent, on arrête la soumission (les erreurs s'affichent en rouge sous chaque champ)
+    // Arrêter s'il y a des erreurs
     if (Object.keys(tempErrors).length > 0) {
       return;
     }
 
     setSubmitting(true);
 
-    const formData = {
-      nom: nom.trim(),
-      telephone: telephone.trim(),
-      gouvernorat,
-      adresse: adresse.trim(),
-      note: note.trim()
-    };
-
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nom: formData.nom,           // ← champ "NOM COMPLET"
-          telephone: formData.telephone,     // ← champ "TÉLÉPHONE" sans le +216
-          gouvernorat: formData.gouvernorat,   // ← valeur du select
-          adresse: formData.adresse,       // ← textarea adresse
-          note: formData.note || "",    // ← textarea note (peut être vide)
-          articles: cart.items.map(item => ({
-            produitId: item.id?.toString() || "",
+          nom: nom.trim(),
+          telephone: telephone.trim(),
+          gouvernorat,
+          adresse: adresse.trim(),
+          note: note.trim(),
+          articles: items.map(item => ({
+            produitId: item.id ? item.id.toString() : "1",
             nom: item.nom,
             taille: item.taille,
             quantite: item.qte,
@@ -169,286 +211,432 @@ export default function Commande() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Afficher le détail de l'erreur retourné par l'API
-        setError(data.details || data.error || "Erreur lors de la commande.");
+        setSubmitError(data.details || data.error || "Une erreur est survenue lors de la commande.");
         return;
       }
 
-      // Succès
+      // Vider le panier et rediriger vers la page confirmation
       clearCart();
       navigate("/confirmation", { state: { order: data } });
 
     } catch (err) {
       console.error(err);
-      setError("Erreur de connexion au serveur. Veuillez réessayer.");
+      setSubmitError("Erreur de connexion au serveur. Veuillez réessayer.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Récupère l'article du panier s'il existe
+  const cartItem = items.length > 0 ? items[0] : null;
+
   return (
-    <div className="commande-page">
-      <Navbar />
+    <div className="commande-page-premium">
+      
+      {/* SECTION 1 — NAVBAR */}
+      <nav className="product-navbar">
+        <a href="/" className="product-navbar-logo">RICHA</a>
+      </nav>
 
-      {/* En-tête de la page */}
-      <header className="page-header">
-        <span className="label-caps">COLLECTION 2026</span>
-        <div className="page-header-row">
-          <h1 className="page-header-title">SET & COMMANDE</h1>
-          <button
-            type="button"
-            className="btn btn-secondary page-header-btn"
-            onClick={() => setIsSizeGuideOpen(true)}
-          >
-            ○ VOIR LES TAILLES
-          </button>
+      {/* SECTION 2 — CARROUSEL HORIZONTAL AUTO-SCROLL */}
+      <div className="carousel-container">
+        <div className="carousel-track">
+          {duplicatedImages.map((imgUrl, index) => (
+            <img
+              key={index}
+              src={imgUrl}
+              alt={`Richa Slide ${index}`}
+              className="carousel-image"
+            />
+          ))}
         </div>
-      </header>
+      </div>
 
-      {/* Section 1 : Catalogue produits */}
-      <section>
-        {loading ? (
-          <div style={{ padding: "80px", textAlign: "center", fontSize: "16px", fontWeight: "bold" }}>
-            CHARGEMENT DES PRODUITS...
+      {/* SECTION 3 — FICHE PRODUIT (2 colonnes) */}
+      <div className="product-layout">
+        
+        {/* Colonne gauche : Image principale + miniatures */}
+        <div className="product-gallery">
+          <div className="product-main-img-container">
+            <span className="product-nouveau-badge">{product.badge}</span>
+            <img
+              src={mainImage}
+              alt={product.nom}
+              className="product-main-img"
+            />
           </div>
-        ) : errorProducts ? (
-          <div style={{ padding: "80px", textAlign: "center", color: "var(--color-error)", fontWeight: "bold" }}>
-            {errorProducts}
-          </div>
-        ) : (
-          <div className="products-grid">
-            {products.map((product, idx) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onOpenSizeGuide={() => setIsSizeGuideOpen(true)}
-                style={{ animationDelay: `${idx * 150}ms` }}
+
+          <div className="product-thumbnails">
+            {galleryImages.map((imgUrl, index) => (
+              <img
+                key={index}
+                src={imgUrl}
+                alt={`Miniature ${index + 1}`}
+                className={`product-thumbnail ${mainImage === imgUrl ? "active" : ""}`}
+                onClick={() => setMainImage(imgUrl)}
               />
             ))}
           </div>
-        )}
-      </section>
+        </div>
 
-      {/* Section 2 : Tableau récapitulatif de commande (panier) */}
-      <OrderSummary />
+        {/* Colonne droite : Informations produit */}
+        <div className="product-info-col">
+          <span className="product-category">{product.categorie}</span>
+          <h1 className="product-name-title">{product.nom}</h1>
+          <p className="product-subtitle">{product.sousNom || "HAUT DRAPÉ + PANTALON WIDE-LEG"}</p>
+          
+          <h2 className="product-price-large">{product.prix} DT</h2>
+          <p className="product-subprice">Livraison gratuite partout en Tunisie</p>
 
-      {/* Section 3 : Formulaire de livraison & Résumé visuel */}
-      <section className="checkout-layout">
+          <div className="product-separator"></div>
 
-        {/* Formulaire de livraison (gauche) */}
-        <div className="checkout-form-section" id="delivery-form-section">
-          <span className="label-caps">ÉTAPE FINALE</span>
-          <h2 className="checkout-form-title">INFORMATIONS DE LIVRAISON</h2>
+          {/* Couleur */}
+          <div className="product-color-section">
+            <div className="product-color-label">COULEUR</div>
+            <div className="product-color-value">{product.couleur || "BEIGE NATUREL"}</div>
+          </div>
 
-          <form onSubmit={handleCheckoutSubmit}>
-            {/* Champ NOM COMPLET */}
-            <div className="form-group">
-              <label className="label-caps" htmlFor="nom">
-                NOM COMPLET *
-              </label>
+          {/* Tailles section */}
+          <div id="tailles-section">
+            <div className="product-size-header">
+              <span className="product-size-label">TAILLES</span>
+              <button
+                type="button"
+                className="product-size-guide-link"
+                onClick={() => setIsSizeGuideOpen(true)}
+              >
+                AFFICHER LES DIMENSIONS
+              </button>
+            </div>
+
+            <div className="product-size-pills">
+              {product.tailles.map((size) => {
+                const isAvailable = product.taillesDisponibles.includes(size);
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    disabled={!isAvailable}
+                    className={`product-size-pill ${selectedSize === size ? "selected" : ""} ${!isAvailable ? "sold-out" : ""}`}
+                    onClick={() => {
+                      if (isAvailable) {
+                        setSelectedSize(size);
+                        setSizeError("");
+                      }
+                    }}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="product-mannequin">{product.mannequin || "Mannequin : 170 cm de taille / Taille M"}</p>
+          </div>
+
+          {/* Messages d'erreur ou succès */}
+          {sizeError && <p className="product-error-msg">{sizeError}</p>}
+          {successMessage && <p className="product-success-msg">{successMessage}</p>}
+
+          {/* Actions d'ajout au panier */}
+          <button
+            type="button"
+            className="product-add-btn"
+            onClick={() => handleAddToCart(false)}
+          >
+            AJOUTER AU PANIER
+          </button>
+
+          <button
+            type="button"
+            className="product-direct-btn"
+            onClick={() => handleAddToCart(true)}
+          >
+            COMMANDER DIRECTEMENT
+          </button>
+
+          <div className="product-separator"></div>
+
+          {/* Informations livraison */}
+          <div className="product-delivery-info">
+            <div className="product-delivery-line">
+              <span>🏪</span>
+              <span>Retrait en magasin GRATUIT</span>
+            </div>
+            <div className="product-delivery-line">
+              <span>🚚</span>
+              <span>Livraison standard à domicile GRATUITE partout en Tunisie</span>
+            </div>
+          </div>
+
+          {/* Description et composition (accordéon) */}
+          <div className="product-accordion-item">
+            <div
+              className="product-accordion-header"
+              onClick={() => setAccordionDetails(!accordionDetails)}
+            >
+              <span>DÉTAILS DU PRODUIT</span>
+              <span>{accordionDetails ? "−" : "+"}</span>
+            </div>
+            {accordionDetails && (
+              <div className="product-accordion-content">
+                {product.description}
+              </div>
+            )}
+          </div>
+
+          <div className="product-accordion-item">
+            <div
+              className="product-accordion-header"
+              onClick={() => setAccordionCare(!accordionCare)}
+            >
+              <span>COMPOSITION & ENTRETIEN</span>
+              <span>{accordionCare ? "−" : "+"}</span>
+            </div>
+            {accordionCare && (
+              <div className="product-accordion-content">
+                {product.composition || "100% Lin naturel · Lavage à la main recommandé · Ne pas mettre au sèche-linge · Repassage à basse température"}
+              </div>
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* SECTION 4 — FORMULAIRE COMMANDE INTÉGRÉ */}
+      <div className="order-form-container" id="formulaire">
+        
+        <header className="order-form-header">
+          <span className="order-form-step">ÉTAPE FINALE</span>
+          <h2 className="order-form-title">INFORMATIONS DE LIVRAISON</h2>
+        </header>
+
+        <div className="order-form-layout">
+          
+          {/* Formulaire à gauche */}
+          <form onSubmit={handleOrderSubmit}>
+            
+            {/* Nom Complet */}
+            <div className="form-group-premium">
+              <label htmlFor="premium-nom">NOM COMPLET *</label>
               <input
+                id="premium-nom"
                 type="text"
-                id="nom"
                 placeholder="Votre nom complet"
+                className="form-input-premium"
                 value={nom}
                 onChange={(e) => setNom(e.target.value)}
               />
-              {errors.nom && (
-                <p style={{ color: "var(--color-error)", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.nom}
-                </p>
-              )}
+              {errors.nom && <p className="product-error-msg" style={{ marginTop: "4px" }}>{errors.nom}</p>}
             </div>
 
-            {/* Champ TÉLÉPHONE */}
-            <div className="form-group">
-              <label className="label-caps" htmlFor="telephone">
-                TÉLÉPHONE *
-              </label>
-              <div className="tel-input-wrapper">
-                <span className="tel-prefix">+216</span>
+            {/* Téléphone */}
+            <div className="form-group-premium">
+              <label htmlFor="premium-tel">TÉLÉPHONE *</label>
+              <div className="tel-wrapper-premium">
+                <span className="tel-prefix-premium">+216</span>
                 <input
-                  className="tel-input"
+                  id="premium-tel"
                   type="tel"
-                  id="telephone"
                   placeholder="XXXXXXXX"
                   maxLength="8"
+                  className="form-input-premium"
                   value={telephone}
                   onChange={(e) => setTelephone(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
-              {errors.telephone && (
-                <p style={{ color: "var(--color-error)", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.telephone}
-                </p>
-              )}
+              {errors.telephone && <p className="product-error-msg" style={{ marginTop: "4px" }}>{errors.telephone}</p>}
             </div>
 
-            {/* Champ GOUVERNORAT */}
-            <div className="form-group">
-              <label className="label-caps" htmlFor="gouvernorat">
-                GOUVERNORAT *
-              </label>
+            {/* Gouvernorat */}
+            <div className="form-group-premium">
+              <label htmlFor="premium-gouvernorat">GOUVERNORAT *</label>
               <select
-                id="gouvernorat"
+                id="premium-gouvernorat"
+                className="form-input-premium"
                 value={gouvernorat}
                 onChange={(e) => setGouvernorat(e.target.value)}
               >
                 <option value="">Sélectionner votre gouvernorat</option>
                 {governorates.map((gov) => (
-                  <option key={gov} value={gov}>
-                    {gov}
-                  </option>
+                  <option key={gov} value={gov}>{gov}</option>
                 ))}
               </select>
-              {errors.gouvernorat && (
-                <p style={{ color: "var(--color-error)", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.gouvernorat}
-                </p>
-              )}
+              {errors.gouvernorat && <p className="product-error-msg" style={{ marginTop: "4px" }}>{errors.gouvernorat}</p>}
             </div>
 
-            {/* Champ ADRESSE */}
-            <div className="form-group">
-              <label className="label-caps" htmlFor="adresse">
-                ADRESSE COMPLÈTE *
-              </label>
+            {/* Adresse */}
+            <div className="form-group-premium">
+              <label htmlFor="premium-adresse">ADRESSE COMPLÈTE *</label>
               <textarea
-                id="adresse"
+                id="premium-adresse"
                 placeholder="Numéro de rue, appartement, ville, code postal"
-                style={{ minHeight: "80px" }}
+                className="form-input-premium"
+                style={{ minHeight: "80px", resize: "vertical" }}
                 value={adresse}
                 onChange={(e) => setAdresse(e.target.value)}
               />
-              {errors.adresse && (
-                <p style={{ color: "var(--color-error)", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.adresse}
-                </p>
-              )}
+              {errors.adresse && <p className="product-error-msg" style={{ marginTop: "4px" }}>{errors.adresse}</p>}
             </div>
 
-            {/* Champ NOTE */}
-            <div className="form-group">
-              <label className="label-caps" htmlFor="note">
-                NOTE (OPTIONNEL)
-              </label>
+            {/* Note optionnelle */}
+            <div className="form-group-premium">
+              <label htmlFor="premium-note">NOTE (OPTIONNEL)</label>
               <textarea
-                id="note"
-                placeholder="Instructions pour la livraison (ex: code de porte, horaires d'appel...)"
-                style={{ minHeight: "60px" }}
+                id="premium-note"
+                placeholder="Instructions pour la livraison (ex: code de porte, horaires...)"
+                className="form-input-premium"
+                style={{ minHeight: "60px", resize: "vertical" }}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
 
-            {/* Checkbox Moyen de paiement */}
-            <div className="checkbox-group">
-              <label className="checkbox-label">
-                <input type="checkbox" checked disabled />
-                <span className="checkbox-text">
-                  PAIEMENT À LA LIVRAISON — CASH UNIQUEMENT
-                  <span className="checkbox-subtext">
-                    DISPONIBLE PARTOUT EN TUNISIE
-                  </span>
-                </span>
-              </label>
+            {/* Récapitulatif commande au-dessus du bouton */}
+            <div className="order-form-recap-box">
+              <span className="order-form-recap-title">VOTRE SÉLECTION :</span>
+              {!cartItem ? (
+                <p className="order-form-recap-empty">
+                  Aucun article —{" "}
+                  <a onClick={() => scrollToSection("tailles-section")}>choisissez une taille ci-dessus</a>
+                </p>
+              ) : (
+                <div className="order-form-recap-item">
+                  <span>{cartItem.nom} (Taille {cartItem.taille})</span>
+                  <span>{cartItem.prix} DT</span>
+                </div>
+              )}
             </div>
 
-            {submitError && (
-              <p style={{ color: "var(--color-error)", fontWeight: "bold", marginBottom: "15px" }}>
-                {submitError}
-              </p>
-            )}
+            {/* Checkbox Paiement à la livraison */}
+            <div className="payment-checkbox-card">
+              <input type="checkbox" checked disabled />
+              <div>
+                <span className="payment-checkbox-title">PAIEMENT À LA LIVRAISON — CASH UNIQUEMENT</span>
+                <span className="payment-checkbox-sub">DISPONIBLE PARTOUT EN TUNISIE</span>
+              </div>
+            </div>
 
+            {submitError && <p className="product-error-msg" style={{ marginBottom: "15px" }}>{submitError}</p>}
+
+            {/* Bouton de confirmation */}
             <button
               type="submit"
-              className="btn btn-primary checkout-submit-btn"
+              className="order-confirm-btn"
               disabled={submitting}
             >
               {submitting ? "CONFIRMATION EN COURS..." : "CONFIRMER LA COMMANDE →"}
             </button>
 
-            <p className="checkout-footer-text">
-              COMMANDE SÉCURISÉE · LIVRAISON 2–4 JOURS OUVRABLES
+            <p className="order-confirm-secure-text">
+              🔒 COMMANDE SÉCURISÉE · LIVRAISON 2–4 JOURS OUVRABLES
             </p>
+
           </form>
-        </div>
 
-        {/* Résumé de commande à droite (sticky) */}
-        <div className="checkout-summary-sticky">
-          <h3 className="checkout-summary-title">RÉCAPITULATIF — VOTRE COMMANDE</h3>
-          <div className="checkout-summary-divider"></div>
+          {/* Récapitulatif collant sombre à droite */}
+          <div className="order-sticky-recap">
+            <span className="order-sticky-label">RÉCAPITULATIF</span>
+            <h3 className="order-sticky-title">VOTRE COMMANDE</h3>
+            
+            <div className="order-sticky-separator"></div>
 
-          <div className="checkout-summary-items">
-            {items.length === 0 ? (
-              <p style={{ color: "#AAAAAA", fontStyle: "italic" }}>
-                Aucun article dans votre panier.
-              </p>
-            ) : (
-              items.map((item) => (
-                <div className="checkout-summary-item" key={`${item.id}-${item.taille}`}>
-                  <div>
-                    <p className="checkout-summary-item-name">{item.nom}</p>
-                    <p className="checkout-summary-item-desc">
-                      Taille : {item.taille} | Qté : {item.qte}
-                    </p>
-                  </div>
-                  <span className="checkout-summary-item-price">
-                    {item.prix * item.qte} DT
+            {/* Article */}
+            {cartItem ? (
+              <div className="order-sticky-item">
+                <div>
+                  <span className="order-sticky-item-name">{cartItem.nom}</span>
+                  <span className="order-sticky-item-desc" style={{ display: "block" }}>
+                    Taille : {cartItem.taille} | Qté : {cartItem.qte}
                   </span>
                 </div>
-              ))
+                <span className="order-sticky-item-price">{cartItem.prix} DT</span>
+              </div>
+            ) : (
+              <p style={{ color: "#AAA", fontStyle: "italic", fontSize: "13px" }}>
+                Aucun article sélectionné.
+              </p>
             )}
-          </div>
 
-          <div className="checkout-summary-divider"></div>
+            <div className="order-sticky-separator"></div>
 
-          <div className="checkout-summary-row">
-            <span>SOUS-TOTAL</span>
-            <span>{totalPrice} DT</span>
-          </div>
-          <div className="checkout-summary-row">
-            <span>LIVRAISON</span>
-            <span style={{ fontWeight: "bold" }}>GRATUITE</span>
-          </div>
-
-          <div className="checkout-summary-divider"></div>
-
-          <div className="checkout-summary-row total">
-            <span>TOTAL</span>
-            <span>{totalPrice} DT</span>
-          </div>
-
-          {/* Grille de 4 pictos */}
-          <div className="checkout-summary-badge-grid">
-            <div className="checkout-summary-badge">
-              <span>🚚</span>
-              <span>LIVRAISON GRATUITE</span>
+            {/* Lignes de prix */}
+            <div className="order-sticky-row">
+              <span>SOUS-TOTAL</span>
+              <span>{cartItem ? totalPrice : 0} DT</span>
             </div>
-            <div className="checkout-summary-badge">
-              <span>💳</span>
-              <span>PAIEMENT LIVRAISON</span>
+            <div className="order-sticky-row">
+              <span>LIVRAISON</span>
+              <span style={{ fontWeight: "bold", color: "#FFF" }}>GRATUITE</span>
             </div>
-            <div className="checkout-summary-badge">
-              <span>🌿</span>
-              <span>LIN NATUREL</span>
+
+            <div className="order-sticky-separator"></div>
+
+            <div className="order-sticky-row total-row">
+              <span>TOTAL</span>
+              <span>{cartItem ? totalPrice : 0} DT</span>
             </div>
-            <div className="checkout-summary-badge">
-              <span>⭐</span>
-              <span>ÉDITION LIMITÉE</span>
+
+            {/* 4 Pictogrammes en grille */}
+            <div className="order-sticky-badges">
+              <div className="order-sticky-badge">
+                <span>🚚</span>
+                <span>Livraison gratuite</span>
+              </div>
+              <div className="order-sticky-badge">
+                <span>💳</span>
+                <span>Paiement livraison</span>
+              </div>
+              <div className="order-sticky-badge">
+                <span>🌿</span>
+                <span>Lin naturel</span>
+              </div>
+              <div className="order-sticky-badge">
+                <span>⭐</span>
+                <span>Édition limitée</span>
+              </div>
             </div>
+
           </div>
+
         </div>
 
+      </div>
+
+      {/* SECTION 5 — BANNIÈRE 4 GARANTIES */}
+      <section className="guarantees-banner-premium">
+        <div className="guarantees-cell-premium">
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>🚚</div>
+          <h3 className="guarantees-title-premium">LIVRAISON RAPIDE</h3>
+          <span className="guarantees-sub-premium">PARTOUT EN TUNISIE</span>
+        </div>
+        <div className="guarantees-cell-premium">
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>💳</div>
+          <h3 className="guarantees-title-premium">PAIEMENT LIVRAISON</h3>
+          <span className="guarantees-sub-premium">AUCUN RISQUE</span>
+        </div>
+        <div className="guarantees-cell-premium">
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>🌿</div>
+          <h3 className="guarantees-title-premium">LIN NATUREL</h3>
+          <span className="guarantees-sub-premium">100% QUALITÉ PREMIUM</span>
+        </div>
+        <div className="guarantees-cell-premium">
+          <div style={{ fontSize: "24px", marginBottom: "10px" }}>⭐</div>
+          <h3 className="guarantees-title-premium">ÉDITION LIMITÉE</h3>
+          <span className="guarantees-sub-premium">STOCK LIMITÉ</span>
+        </div>
       </section>
 
-      {/* Modal du guide des tailles */}
+      {/* Guide des tailles modale */}
       <SizeGuideModal
         isOpen={isSizeGuideOpen}
         onClose={() => setIsSizeGuideOpen(false)}
       />
 
+      {/* SECTION 6 — FOOTER */}
       <Footer onOpenSizeGuide={() => setIsSizeGuideOpen(true)} />
+
     </div>
   );
 }
